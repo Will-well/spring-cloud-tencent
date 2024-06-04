@@ -17,8 +17,6 @@
 
 package com.tencent.cloud.common.constant;
 
-import org.springframework.core.Ordered;
-
 /**
  * Constant for metadata.
  *
@@ -47,26 +45,6 @@ public final class MetadataConstant {
 	private MetadataConstant() {
 
 	}
-	/**
-	 * Order of filter, interceptor, ...
-	 */
-	public static class OrderConstant {
-
-		/**
-		 * Order of filter.
-		 */
-		public static final int WEB_FILTER_ORDER = Ordered.HIGHEST_PRECEDENCE + 13;
-
-		/**
-		 * Order of MetadataFirstFeignInterceptor.
-		 */
-		public static int METADATA_FIRST_FEIGN_INTERCEPTOR_ORDER = Ordered.HIGHEST_PRECEDENCE + 1;
-
-		/**
-		 * Order of Metadata2HeaderInterceptor.
-		 */
-		public static int METADATA_2_HEADER_INTERCEPTOR_ORDER = Ordered.LOWEST_PRECEDENCE;
-	}
 
 	/**
 	 * Metadata HTTP header name.
@@ -93,4 +71,19 @@ public final class MetadataConstant {
 		 */
 		public static final String METADATA_CONTEXT = "SCT-METADATA-CONTEXT";
 	}
+
+	public static class DefaultMetadata {
+
+		/**
+		 * Default Metadata Source Service Namespace Key.
+		 */
+		public static final String DEFAULT_METADATA_SOURCE_SERVICE_NAMESPACE = "source_service_namespace";
+
+		/**
+		 * Default Metadata Source Service Name Key.
+		 */
+		public static final String DEFAULT_METADATA_SOURCE_SERVICE_NAME = "source_service_name";
+
+	}
+
 }

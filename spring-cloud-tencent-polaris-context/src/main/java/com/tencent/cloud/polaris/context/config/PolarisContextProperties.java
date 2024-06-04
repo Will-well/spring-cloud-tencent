@@ -31,6 +31,7 @@ import com.tencent.polaris.factory.ConfigAPIFactory;
 import com.tencent.polaris.factory.config.ConfigurationImpl;
 import org.apache.commons.lang.StringUtils;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.util.CollectionUtils;
 
@@ -45,21 +46,31 @@ public class PolarisContextProperties {
 	/**
 	 * polaris server address.
 	 */
+	@Value("${spring.cloud.polaris.address:}")
 	private String address;
 
 	/**
 	 * current server local ip address.
 	 */
+	@Value("${spring.cloud.polaris.localIpAddress:}")
 	private String localIpAddress;
+
+	/**
+	 * current server local port.
+	 */
+	@Value("${spring.cloud.polaris.localPort:}")
+	private Integer localPort;
 
 	/**
 	 * If polaris enabled.
 	 */
+	@Value("${spring.cloud.polaris.enabled:#{'true'}}")
 	private Boolean enabled;
 
 	/**
 	 * polaris namespace.
 	 */
+	@Value("${spring.cloud.polaris.namespace:#{'default'}}")
 	private String namespace = "default";
 
 	/**
@@ -67,7 +78,7 @@ public class PolarisContextProperties {
 	 */
 	private String service;
 
-	public Configuration configuration(List<PolarisConfigModifier> modifierList, Supplier<String> ipAddressSupplier) {
+	public Configuration configuration(List<PolarisConfigModifier> modifierList, Supplier<String> ipAddressSupplier, Supplier<Integer> portSupplier) {
 		// 1. Read user-defined polaris.yml configuration
 		ConfigurationImpl configuration = (ConfigurationImpl) ConfigAPIFactory
 				.defaultConfig(ConfigProvider.DEFAULT_CONFIG);
@@ -77,6 +88,9 @@ public class PolarisContextProperties {
 		if (StringUtils.isBlank(localIpAddress)) {
 			defaultHost = ipAddressSupplier.get();
 			this.localIpAddress = defaultHost;
+		}
+		if (this.localPort == null || this.localPort <= 0) {
+			this.localPort = portSupplier.get();
 		}
 
 		configuration.getGlobal().getAPI().setBindIP(defaultHost);
@@ -110,6 +124,14 @@ public class PolarisContextProperties {
 		this.localIpAddress = localIpAddress;
 	}
 
+	public Integer getLocalPort() {
+		return localPort;
+	}
+
+	public void setLocalPort(Integer localPort) {
+		this.localPort = localPort;
+	}
+
 	public Boolean getEnabled() {
 		return enabled;
 	}
@@ -132,5 +154,17 @@ public class PolarisContextProperties {
 
 	public void setService(String service) {
 		this.service = service;
+	}
+
+	@Override
+	public String toString() {
+		return "PolarisContextProperties{" +
+				"address='" + address + '\'' +
+				", localIpAddress='" + localIpAddress + '\'' +
+				((this.localPort == null || this.localPort <= 0) ? "" : ", localPort=" + localPort) +
+				", enabled=" + enabled +
+				", namespace='" + namespace + '\'' +
+				((StringUtils.isBlank(this.service)) ? "" : ", service='" + service + '\'') +
+				'}';
 	}
 }

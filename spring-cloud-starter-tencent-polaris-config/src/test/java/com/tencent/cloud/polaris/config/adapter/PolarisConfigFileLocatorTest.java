@@ -29,22 +29,22 @@ import com.tencent.cloud.polaris.config.config.PolarisConfigProperties;
 import com.tencent.cloud.polaris.context.config.PolarisContextProperties;
 import com.tencent.polaris.configuration.api.core.ConfigFileService;
 import com.tencent.polaris.configuration.api.core.ConfigKVFile;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.PropertySource;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 /**
  * test for {@link PolarisConfigFileLocator}.
  *@author lepdou 2022-06-11
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class PolarisConfigFileLocatorTest {
 
 	private final String testNamespace = "testNamespace";
@@ -80,17 +80,19 @@ public class PolarisConfigFileLocatorTest {
 		Map<String, Object> emptyMap = new HashMap<>();
 		ConfigKVFile emptyConfigFile = new MockedConfigKVFile(emptyMap);
 		when(configFileService.getConfigYamlFile(testNamespace, testServiceName, "application.yml")).thenReturn(emptyConfigFile);
+		when(configFileService.getConfigYamlFile(testNamespace, testServiceName, "application.yaml")).thenReturn(emptyConfigFile);
 		when(configFileService.getConfigPropertiesFile(testNamespace, testServiceName, "bootstrap.properties")).thenReturn(emptyConfigFile);
 		when(configFileService.getConfigYamlFile(testNamespace, testServiceName, "bootstrap.yml")).thenReturn(emptyConfigFile);
+		when(configFileService.getConfigYamlFile(testNamespace, testServiceName, "bootstrap.yaml")).thenReturn(emptyConfigFile);
 
 		when(polarisConfigProperties.getGroups()).thenReturn(null);
 		when(environment.getActiveProfiles()).thenReturn(new String[] {});
 
 		PropertySource<?> propertySource = locator.locate(environment);
 
-		Assert.assertEquals("v1", propertySource.getProperty("k1"));
-		Assert.assertEquals("v2", propertySource.getProperty("k2"));
-		Assert.assertEquals("v3", propertySource.getProperty("k3"));
+		assertThat(propertySource.getProperty("k1")).isEqualTo("v1");
+		assertThat(propertySource.getProperty("k2")).isEqualTo("v2");
+		assertThat(propertySource.getProperty("k3")).isEqualTo("v3");
 	}
 
 	@Test
@@ -120,20 +122,24 @@ public class PolarisConfigFileLocatorTest {
 		Map<String, Object> emptyMap = new HashMap<>();
 		ConfigKVFile emptyConfigFile = new MockedConfigKVFile(emptyMap);
 		when(configFileService.getConfigYamlFile(testNamespace, testServiceName, "application.yml")).thenReturn(emptyConfigFile);
+		when(configFileService.getConfigYamlFile(testNamespace, testServiceName, "application.yaml")).thenReturn(emptyConfigFile);
 		when(configFileService.getConfigYamlFile(testNamespace, testServiceName, "application-dev.yml")).thenReturn(emptyConfigFile);
+		when(configFileService.getConfigYamlFile(testNamespace, testServiceName, "application-dev.yaml")).thenReturn(emptyConfigFile);
 		when(configFileService.getConfigPropertiesFile(testNamespace, testServiceName, "bootstrap.properties")).thenReturn(emptyConfigFile);
 		when(configFileService.getConfigPropertiesFile(testNamespace, testServiceName, "bootstrap-dev.properties")).thenReturn(emptyConfigFile);
 		when(configFileService.getConfigYamlFile(testNamespace, testServiceName, "bootstrap.yml")).thenReturn(emptyConfigFile);
+		when(configFileService.getConfigYamlFile(testNamespace, testServiceName, "bootstrap.yaml")).thenReturn(emptyConfigFile);
 		when(configFileService.getConfigYamlFile(testNamespace, testServiceName, "bootstrap-dev.yml")).thenReturn(emptyConfigFile);
+		when(configFileService.getConfigYamlFile(testNamespace, testServiceName, "bootstrap-dev.yaml")).thenReturn(emptyConfigFile);
 
 		when(polarisConfigProperties.getGroups()).thenReturn(null);
 		when(environment.getActiveProfiles()).thenReturn(new String[] {"dev"});
 
 		PropertySource<?> propertySource = locator.locate(environment);
 
-		Assert.assertEquals("v11", propertySource.getProperty("k1"));
-		Assert.assertEquals("v2", propertySource.getProperty("k2"));
-		Assert.assertEquals("v3", propertySource.getProperty("k3"));
+		assertThat(propertySource.getProperty("k1")).isEqualTo("v11");
+		assertThat(propertySource.getProperty("k2")).isEqualTo("v2");
+		assertThat(propertySource.getProperty("k3")).isEqualTo("v3");
 	}
 
 	@Test
@@ -149,8 +155,10 @@ public class PolarisConfigFileLocatorTest {
 
 		when(configFileService.getConfigPropertiesFile(testNamespace, testServiceName, "application.properties")).thenReturn(emptyConfigFile);
 		when(configFileService.getConfigYamlFile(testNamespace, testServiceName, "application.yml")).thenReturn(emptyConfigFile);
+		when(configFileService.getConfigYamlFile(testNamespace, testServiceName, "application.yaml")).thenReturn(emptyConfigFile);
 		when(configFileService.getConfigPropertiesFile(testNamespace, testServiceName, "bootstrap.properties")).thenReturn(emptyConfigFile);
 		when(configFileService.getConfigYamlFile(testNamespace, testServiceName, "bootstrap.yml")).thenReturn(emptyConfigFile);
+		when(configFileService.getConfigYamlFile(testNamespace, testServiceName, "bootstrap.yaml")).thenReturn(emptyConfigFile);
 
 		List<ConfigFileGroup> customFiles = new LinkedList<>();
 		ConfigFileGroup configFileGroup = new ConfigFileGroup();
@@ -180,8 +188,8 @@ public class PolarisConfigFileLocatorTest {
 
 		PropertySource<?> propertySource = locator.locate(environment);
 
-		Assert.assertEquals("v1", propertySource.getProperty("k1"));
-		Assert.assertEquals("v2", propertySource.getProperty("k2"));
-		Assert.assertEquals("v3", propertySource.getProperty("k3"));
+		assertThat(propertySource.getProperty("k1")).isEqualTo("v1");
+		assertThat(propertySource.getProperty("k2")).isEqualTo("v2");
+		assertThat(propertySource.getProperty("k3")).isEqualTo("v3");
 	}
 }

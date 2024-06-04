@@ -17,20 +17,31 @@
 
 package com.tencent.cloud.polaris.circuitbreaker.config;
 
-import com.tencent.cloud.common.constant.ContextConstant;
-import com.tencent.cloud.polaris.context.PolarisConfigModifier;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.tencent.cloud.polaris.circuitbreaker.PolarisCircuitBreakerFactory;
+import com.tencent.cloud.polaris.circuitbreaker.common.CircuitBreakerConfigModifier;
+import com.tencent.cloud.polaris.circuitbreaker.reporter.ExceptionCircuitBreakerReporter;
+import com.tencent.cloud.polaris.circuitbreaker.reporter.SuccessCircuitBreakerReporter;
+import com.tencent.cloud.polaris.circuitbreaker.resttemplate.PolarisCircuitBreakerRestTemplateBeanPostProcessor;
+import com.tencent.cloud.polaris.context.PolarisSDKContextManager;
 import com.tencent.cloud.rpc.enhancement.config.RpcEnhancementAutoConfiguration;
 import com.tencent.cloud.rpc.enhancement.config.RpcEnhancementReporterProperties;
-import com.tencent.polaris.api.config.consumer.ServiceRouterConfig;
-import com.tencent.polaris.factory.config.ConfigurationImpl;
-import com.tencent.polaris.plugins.router.healthy.RecoverRouterConfig;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.cloud.client.circuitbreaker.CircuitBreakerFactory;
+import org.springframework.cloud.client.circuitbreaker.Customizer;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+
 /**
- * Autoconfiguration at bootstrap phase.
+ * Autoconfiguration for PolarisCircuitBreaker.
  *
  * @author lepdou 2022-03-29
  */
@@ -39,40 +50,43 @@ import org.springframework.context.annotation.Configuration;
 @AutoConfigureAfter(RpcEnhancementAutoConfiguration.class)
 public class PolarisCircuitBreakerAutoConfiguration {
 
+	@Autowired(required = false)
+	private List<Customizer<PolarisCircuitBreakerFactory>> customizers = new ArrayList<>();
+
 	@Bean
+	@ConditionalOnClass(name = "org.springframework.web.client.RestTemplate")
+	public static PolarisCircuitBreakerRestTemplateBeanPostProcessor polarisCircuitBreakerRestTemplateBeanPostProcessor(
+			ApplicationContext applicationContext) {
+		return new PolarisCircuitBreakerRestTemplateBeanPostProcessor(applicationContext);
+	}
+
+	@Bean
+	@ConditionalOnMissingBean(SuccessCircuitBreakerReporter.class)
+	public SuccessCircuitBreakerReporter successCircuitBreakerReporter(RpcEnhancementReporterProperties properties,
+			PolarisSDKContextManager polarisSDKContextManager) {
+		return new SuccessCircuitBreakerReporter(properties, polarisSDKContextManager.getCircuitBreakAPI());
+	}
+
+	@Bean
+	@ConditionalOnMissingBean(ExceptionCircuitBreakerReporter.class)
+	public ExceptionCircuitBreakerReporter exceptionCircuitBreakerReporter(RpcEnhancementReporterProperties properties,
+			PolarisSDKContextManager polarisSDKContextManager) {
+		return new ExceptionCircuitBreakerReporter(properties, polarisSDKContextManager.getCircuitBreakAPI());
+	}
+
+	@Bean
+	@ConditionalOnMissingBean(CircuitBreakerFactory.class)
+	public CircuitBreakerFactory polarisCircuitBreakerFactory(PolarisSDKContextManager polarisSDKContextManager) {
+		PolarisCircuitBreakerFactory factory = new PolarisCircuitBreakerFactory(
+				polarisSDKContextManager.getCircuitBreakAPI(), polarisSDKContextManager.getConsumerAPI());
+		customizers.forEach(customizer -> customizer.customize(factory));
+		return factory;
+	}
+
+	@Bean
+	@ConditionalOnMissingBean(CircuitBreakerConfigModifier.class)
 	public CircuitBreakerConfigModifier circuitBreakerConfigModifier(RpcEnhancementReporterProperties properties) {
 		return new CircuitBreakerConfigModifier(properties);
 	}
 
-	public static class CircuitBreakerConfigModifier implements PolarisConfigModifier {
-
-		private final RpcEnhancementReporterProperties properties;
-
-		public CircuitBreakerConfigModifier(RpcEnhancementReporterProperties properties) {
-			this.properties = properties;
-		}
-
-		@Override
-		public void modify(ConfigurationImpl configuration) {
-			properties.setEnabled(true);
-
-			// Turn on circuitbreaker configuration
-			configuration.getConsumer().getCircuitBreaker().setEnable(true);
-
-			// Set excludeCircuitBreakInstances to true
-			RecoverRouterConfig recoverRouterConfig = configuration.getConsumer().getServiceRouter()
-					.getPluginConfig(ServiceRouterConfig.DEFAULT_ROUTER_RECOVER, RecoverRouterConfig.class);
-
-			recoverRouterConfig.setExcludeCircuitBreakInstances(true);
-
-			// Update modified config to source properties
-			configuration.getConsumer().getServiceRouter()
-					.setPluginConfig(ServiceRouterConfig.DEFAULT_ROUTER_RECOVER, recoverRouterConfig);
-		}
-
-		@Override
-		public int getOrder() {
-			return ContextConstant.ModifierOrder.CIRCUIT_BREAKER_ORDER;
-		}
-	}
 }

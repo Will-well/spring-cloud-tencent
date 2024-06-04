@@ -17,14 +17,14 @@
 
 package com.tencent.cloud.rpc.enhancement.config;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.http.HttpStatus.MOVED_PERMANENTLY;
@@ -37,8 +37,12 @@ import static org.springframework.http.HttpStatus.Series.SERVER_ERROR;
  *
  * @author Haotian Zhang
  */
-@RunWith(SpringRunner.class)
-@SpringBootTest(classes = RpcEnhancementReporterPropertiesTest.TestApplication.class)
+@ExtendWith(SpringExtension.class)
+@SpringBootTest(classes = RpcEnhancementReporterPropertiesTest.TestApplication.class, properties = {
+		"spring.application.name=test",
+		"spring.cloud.gateway.enabled=false",
+		"spring.cloud.tencent.rpc-enhancement.reporter=true"
+})
 @ActiveProfiles("test")
 public class RpcEnhancementReporterPropertiesTest {
 
@@ -55,6 +59,7 @@ public class RpcEnhancementReporterPropertiesTest {
 		assertThat(rpcEnhancementReporterProperties.getStatuses()).isNotEmpty();
 		assertThat(rpcEnhancementReporterProperties.getStatuses().get(0)).isEqualTo(MULTIPLE_CHOICES);
 		assertThat(rpcEnhancementReporterProperties.getStatuses().get(1)).isEqualTo(MOVED_PERMANENTLY);
+		assertThat(rpcEnhancementReporterProperties.isEnabled()).isEqualTo(true);
 	}
 
 	@SpringBootApplication

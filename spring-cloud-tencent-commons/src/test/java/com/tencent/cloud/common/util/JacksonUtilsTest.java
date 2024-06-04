@@ -21,9 +21,11 @@ package com.tencent.cloud.common.util;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import org.springframework.util.StringUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -33,7 +35,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  *
  * @author lepdou, Haotian Zhang, cheese8
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class JacksonUtilsTest {
 
 	@Test
@@ -43,6 +45,7 @@ public class JacksonUtilsTest {
 		sourceMap.put("k2", "v2");
 		sourceMap.put("k3", "v3");
 		assertThat(JacksonUtils.serialize2Json(sourceMap)).isEqualTo("{\"k1\":\"v1\",\"k2\":\"v2\",\"k3\":\"v3\"}");
+		assertThat(StringUtils.trimAllWhitespace(JacksonUtils.serialize2Json(sourceMap, true))).isEqualTo("{\"k1\":\"v1\",\"k2\":\"v2\",\"k3\":\"v3\"}");
 	}
 
 	@Test

@@ -22,17 +22,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import com.tencent.cloud.polaris.context.PolarisSDKContextManager;
 import com.tencent.polaris.api.config.plugin.DefaultPlugins;
-import com.tencent.polaris.client.api.SDKContext;
 import com.tencent.polaris.factory.config.global.ServerConnectorConfigImpl;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.util.CollectionUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -42,7 +42,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * @author lingxiao.wlx
  */
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = NacosContextPropertiesTest.TestApplication.class)
 @ActiveProfiles("test")
 public class NacosContextPropertiesTest {
@@ -51,7 +51,7 @@ public class NacosContextPropertiesTest {
 	private NacosContextProperties nacosContextProperties;
 
 	@Autowired
-	private SDKContext sdkContext;
+	private PolarisSDKContextManager polarisSDKContextManager;
 
 	@Test
 	public void testDefaultInitialization() {
@@ -62,12 +62,14 @@ public class NacosContextPropertiesTest {
 		assertThat(nacosContextProperties.isDiscoveryEnabled()).isTrue();
 		assertThat(nacosContextProperties.getGroup()).isNotBlank();
 		assertThat(nacosContextProperties.getClusterName()).isNotBlank();
+		assertThat(nacosContextProperties.getNamespace()).isNotBlank();
 	}
 
 	@Test
 	public void testModify() {
-		assertThat(sdkContext).isNotNull();
-		com.tencent.polaris.api.config.Configuration configuration = sdkContext.getConfig();
+		assertThat(polarisSDKContextManager).isNotNull();
+		com.tencent.polaris.api.config.Configuration configuration = polarisSDKContextManager.getSDKContext()
+				.getConfig();
 		List<ServerConnectorConfigImpl> serverConnectorConfigs = configuration.getGlobal().getServerConnectors();
 		Optional<ServerConnectorConfigImpl> optionalServerConnectorConfig = serverConnectorConfigs.stream().filter(
 				item -> "nacos".equals(item.getId())
@@ -75,7 +77,8 @@ public class NacosContextPropertiesTest {
 		assertThat(optionalServerConnectorConfig.isPresent()).isTrue();
 		ServerConnectorConfigImpl serverConnectorConfig = optionalServerConnectorConfig.get();
 		if (!CollectionUtils.isEmpty(serverConnectorConfig.getAddresses())) {
-			assertThat(nacosContextProperties.getServerAddr().equals(serverConnectorConfig.getAddresses().get(0))).isTrue();
+			assertThat(nacosContextProperties.getServerAddr()
+					.equals(serverConnectorConfig.getAddresses().get(0))).isTrue();
 		}
 		assertThat(DefaultPlugins.SERVER_CONNECTOR_NACOS.equals(serverConnectorConfig.getProtocol())).isTrue();
 
@@ -83,9 +86,15 @@ public class NacosContextPropertiesTest {
 		assertThat(metadata.get(NacosConfigModifier.USERNAME)).isEqualTo(nacosContextProperties.getUsername());
 		assertThat(metadata.get(NacosConfigModifier.PASSWORD)).isEqualTo(nacosContextProperties.getPassword());
 		assertThat(metadata.get(NacosConfigModifier.CONTEXT_PATH)).isEqualTo(nacosContextProperties.getContextPath());
+		assertThat(metadata.get(NacosConfigModifier.NAMESPACE)).isEqualTo(nacosContextProperties.getNamespace());
+		assertThat(metadata.get(NacosConfigModifier.GROUP)).isEqualTo(nacosContextProperties.getGroup());
 	}
 
 	@SpringBootApplication
 	protected static class TestApplication {
+
+		static {
+			PolarisSDKContextManager.innerDestroy();
+		}
 	}
 }

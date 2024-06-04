@@ -67,6 +67,18 @@
       "description": "Millis interval of refresh of service info list. Default: 60000."
     },
     {
+      "name": "spring.cloud.polaris.loadbalancer.enabled",
+      "type": "java.lang.Boolean",
+      "defaultValue": "true",
+      "description": "polaris loadbalancer."
+    },
+    {
+      "name": "spring.cloud.polaris.loadbalancer.strategy",
+      "type": "java.lang.String",
+      "defaultValue": "roundRobin",
+      "description": "loadbalancer strategy."
+    },
+    {
       "name": "spring.cloud.nacos.discovery.enabled",
       "type": "java.lang.Boolean",
       "sourceType": "com.tencent.cloud.polaris.extend.nacos.NacosContextProperties",
@@ -78,6 +90,13 @@
       "description": "group name for nacos.",
       "sourceType": "com.tencent.cloud.polaris.extend.nacos.NacosContextProperties",
       "defaultValue": "DEFAULT_GROUP"
+    },
+    {
+      "name": "spring.cloud.nacos.discovery.namespace",
+      "type": "java.lang.String",
+      "description": "namespace id for nacos.",
+      "sourceType": "com.tencent.cloud.polaris.extend.nacos.NacosContextProperties",
+      "defaultValue": "public"
     },
     {
       "name": "spring.cloud.nacos.discovery.password",
@@ -109,6 +128,29 @@
       "type": "java.lang.String",
       "description": "the nacos authentication cluster-name.",
       "sourceType": "com.tencent.cloud.polaris.extend.nacos.NacosContextProperties"
+    }
+  ],
+  "hints": [
+    {
+      "name": "spring.cloud.polaris.loadbalancer.strategy",
+      "values": [
+        {
+          "value": "roundRobin",
+          "description": "round robin load balancer."
+        },
+        {
+          "value": "random",
+          "description": "random load balancer."
+        },
+        {
+          "value": "polarisWeightedRandom",
+          "description": "polaris weighted random load balancer."
+        },
+        {
+          "value": "polarisRingHash",
+          "description": "polaris ring hash load balancer."
+        }
+      ]
     }
   ]
 }

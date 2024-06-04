@@ -28,12 +28,7 @@ import org.springframework.stereotype.Component;
 public class QuickstartCalleeServiceFallback implements QuickstartCalleeService {
 
 	@Override
-	public int sum(int value1, int value2) {
-		return 0;
-	}
-
-	@Override
-	public String circuitBreak() {
-		return "An exception occurred in the service call and fallback";
+	public String sum(int value1, int value2) {
+		return "sum is 0.";
 	}
 }

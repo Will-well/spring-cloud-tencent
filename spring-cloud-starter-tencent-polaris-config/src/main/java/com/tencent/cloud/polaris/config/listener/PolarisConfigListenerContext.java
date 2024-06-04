@@ -70,11 +70,11 @@ public final class PolarisConfigListenerContext {
 	/**
 	 * All custom interested keys defined in application .
 	 */
-	private static final Map<ConfigChangeListener, Set<String>> interestedKeys = Maps.newHashMap();
+	private static final Map<ConfigChangeListener, Set<String>> interestedKeys = Maps.newConcurrentMap();
 	/**
 	 * All custom interested key prefixes defined in application .
 	 */
-	private static final Map<ConfigChangeListener, Set<String>> interestedKeyPrefixes = Maps.newHashMap();
+	private static final Map<ConfigChangeListener, Set<String>> interestedKeyPrefixes = Maps.newConcurrentMap();
 	/**
 	 * Cache all latest configuration information for users in the application environment .
 	 */
@@ -87,7 +87,7 @@ public final class PolarisConfigListenerContext {
 	 * Get or Created new execute server .
 	 * @return execute service instance of {@link ExecutorService}
 	 */
-	private static ExecutorService executor() {
+	public static ExecutorService executor() {
 		if (EAR.get() == null) {
 			synchronized (PolarisConfigListenerContext.class) {
 				int coreThreadSize = Runtime.getRuntime().availableProcessors();
@@ -116,6 +116,11 @@ public final class PolarisConfigListenerContext {
 	 * @param ret origin properties map
 	 */
 	static void initialize(Map<String, Object> ret) {
+		for (Map.Entry<String, Object> entry : ret.entrySet()) {
+			if (entry.getValue() == null) {
+				ret.put(entry.getKey(), "");
+			}
+		}
 		properties.putAll(ret);
 	}
 
@@ -142,6 +147,9 @@ public final class PolarisConfigListenerContext {
 			ret.keySet().parallelStream().forEach(key -> {
 				Object oldValue = properties.getIfPresent(key);
 				Object newValue = ret.get(key);
+				if (newValue == null) {
+					newValue = "";
+				}
 				if (oldValue != null) {
 					if (!newValue.equals(oldValue)) {
 						properties.put(key, newValue);
@@ -185,6 +193,15 @@ public final class PolarisConfigListenerContext {
 			Map<String, ConfigPropertyChangeInfo> modifiedChanges = new HashMap<>(interestedChangedKeys.size());
 			interestedChangedKeys.parallelStream().forEach(key -> modifiedChanges.put(key, changes.get(key)));
 			ConfigChangeEvent event = new ConfigChangeEvent(modifiedChanges, interestedChangedKeys);
+
+			if (listener instanceof SyncConfigChangeListener) {
+				SyncConfigChangeListener l = (SyncConfigChangeListener) listener;
+				if (!l.isAsync()) {
+					listener.onChange(event);
+					continue;
+				}
+			}
+
 			PolarisConfigListenerContext.executor().execute(() -> listener.onChange(event));
 		}
 	}

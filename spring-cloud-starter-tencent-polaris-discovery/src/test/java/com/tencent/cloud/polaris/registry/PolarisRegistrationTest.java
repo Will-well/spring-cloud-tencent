@@ -22,16 +22,19 @@ import java.util.Map;
 
 import com.tencent.cloud.common.metadata.StaticMetadataManager;
 import com.tencent.cloud.polaris.PolarisDiscoveryProperties;
+import com.tencent.cloud.polaris.context.config.PolarisContextProperties;
 import com.tencent.cloud.polaris.extend.consul.ConsulContextProperties;
 import com.tencent.cloud.polaris.extend.nacos.NacosContextProperties;
 import com.tencent.polaris.api.config.Configuration;
 import com.tencent.polaris.api.config.global.APIConfig;
 import com.tencent.polaris.api.config.global.GlobalConfig;
 import com.tencent.polaris.client.api.SDKContext;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import org.springframework.boot.web.reactive.context.ReactiveWebServerApplicationContext;
 import org.springframework.boot.web.server.WebServer;
@@ -50,22 +53,28 @@ import static org.mockito.Mockito.when;
  *
  * @author Haotian Zhang
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class PolarisRegistrationTest {
 
+	private static final int testLocalPort = 10086;
 	private NacosContextProperties nacosContextProperties;
 	private PolarisRegistration polarisRegistration1;
 	private PolarisRegistration polarisRegistration2;
-
 	private PolarisRegistration polarisRegistration3;
+	private PolarisRegistration polarisRegistration4;
 
-	@Before
-	public void setUp() {
+	@BeforeEach
+	void setUp() {
 		// mock PolarisDiscoveryProperties
 		PolarisDiscoveryProperties polarisDiscoveryProperties = mock(PolarisDiscoveryProperties.class);
 		doReturn(SERVICE_PROVIDER).when(polarisDiscoveryProperties).getService();
 		doReturn("http").when(polarisDiscoveryProperties).getProtocol();
 		doReturn(true).when(polarisDiscoveryProperties).isRegisterEnabled();
+
+		// mock PolarisContextProperties
+		PolarisContextProperties polarisContextProperties = mock(PolarisContextProperties.class);
+		doReturn(testLocalPort).when(polarisContextProperties).getLocalPort();
 
 		// mock ConsulContextProperties
 		ConsulContextProperties consulContextProperties = mock(ConsulContextProperties.class);
@@ -76,6 +85,13 @@ public class PolarisRegistrationTest {
 		nacosContextProperties = mock(NacosContextProperties.class);
 		doReturn(true).when(nacosContextProperties).isEnabled();
 		doReturn(true).when(nacosContextProperties).isRegisterEnabled();
+		doReturn("/").when(nacosContextProperties).getContextPath();
+		doReturn("cluster").when(nacosContextProperties).getClusterName();
+		doReturn("").when(nacosContextProperties).getGroup();
+		doReturn(true).when(nacosContextProperties).isDiscoveryEnabled();
+		doReturn("").when(nacosContextProperties).getPassword();
+		doReturn("").when(nacosContextProperties).getUsername();
+		doReturn("").when(nacosContextProperties).getServerAddr();
 
 		// mock SDKContext
 		APIConfig apiConfig = mock(APIConfig.class);
@@ -103,17 +119,21 @@ public class PolarisRegistrationTest {
 		ReactiveWebServerApplicationContext reactiveWebServerApplicationContext = mock(ReactiveWebServerApplicationContext.class);
 		doReturn(reactiveWebServer).when(reactiveWebServerApplicationContext).getWebServer();
 
-		polarisRegistration1 = new PolarisRegistration(polarisDiscoveryProperties, consulContextProperties,
+		polarisRegistration1 = PolarisRegistration.registration(polarisDiscoveryProperties, null, consulContextProperties,
 				polarisContext, staticMetadataManager, nacosContextProperties,
-				servletWebServerApplicationContext, null);
+				servletWebServerApplicationContext, null, null);
 
-		polarisRegistration2 = new PolarisRegistration(polarisDiscoveryProperties, consulContextProperties,
+		polarisRegistration2 = PolarisRegistration.registration(polarisDiscoveryProperties, null, consulContextProperties,
 				polarisContext, staticMetadataManager, nacosContextProperties,
-				null, reactiveWebServerApplicationContext);
+				null, reactiveWebServerApplicationContext, null);
 
-		polarisRegistration3 = new PolarisRegistration(polarisDiscoveryProperties, consulContextProperties,
+		polarisRegistration3 = PolarisRegistration.registration(polarisDiscoveryProperties, null, consulContextProperties,
 				polarisContext, staticMetadataManager, nacosContextProperties,
-				null, null);
+				null, null, null);
+
+		polarisRegistration4 = PolarisRegistration.registration(polarisDiscoveryProperties, polarisContextProperties, consulContextProperties,
+				polarisContext, staticMetadataManager, nacosContextProperties,
+				null, null, null);
 	}
 
 	@Test
@@ -136,6 +156,7 @@ public class PolarisRegistrationTest {
 		catch (RuntimeException e) {
 			assertThat(e.getMessage()).isEqualTo("Unsupported web type.");
 		}
+		assertThat(polarisRegistration4.getPort()).isEqualTo(testLocalPort);
 	}
 
 	@Test
@@ -159,13 +180,8 @@ public class PolarisRegistrationTest {
 		Map<String, String> metadata = polarisRegistration1.getMetadata();
 		assertThat(metadata).isNotNull();
 		assertThat(metadata).isNotEmpty();
-		assertThat(metadata.size()).isEqualTo(3);
+		assertThat(metadata.size()).isEqualTo(4);
 		assertThat(metadata.get("key1")).isEqualTo("value1");
-	}
-
-	@Test
-	public void testGetPolarisProperties() {
-		assertThat(polarisRegistration1.getPolarisProperties()).isNotNull();
 	}
 
 	@Test

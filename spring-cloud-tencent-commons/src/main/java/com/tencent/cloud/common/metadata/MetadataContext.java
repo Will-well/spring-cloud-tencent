@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.tencent.cloud.common.util.ApplicationContextAwareUtils;
+import com.tencent.cloud.common.util.DiscoveryUtil;
 import com.tencent.cloud.common.util.JacksonUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,11 +47,6 @@ public class MetadataContext {
 	 * disposable Context.
 	 */
 	public static final String FRAGMENT_DISPOSABLE = "disposable";
-
-	/**
-	 * load balancer context.
-	 */
-	public static final String FRAGMENT_LOAD_BALANCER = "loadbalancer";
 
 	/**
 	 * upstream disposable Context.
@@ -92,7 +88,7 @@ public class MetadataContext {
 			throw new RuntimeException("namespace should not be blank. please configure spring.cloud.polaris.namespace or "
 					+ "spring.cloud.polaris.discovery.namespace");
 		}
-
+		namespace = DiscoveryUtil.rewriteNamespace(namespace);
 		LOCAL_NAMESPACE = namespace;
 
 		String serviceName = ApplicationContextAwareUtils
@@ -102,22 +98,25 @@ public class MetadataContext {
 					"spring.cloud.polaris.discovery.service", ApplicationContextAwareUtils
 							.getProperties("spring.application.name", null));
 		}
-
 		if (!StringUtils.hasText(serviceName)) {
 			LOG.error("service name should not be blank. please configure spring.cloud.polaris.service or "
 					+ "spring.cloud.polaris.discovery.service or spring.application.name");
 			throw new RuntimeException("service name should not be blank. please configure spring.cloud.polaris.service or "
 					+ "spring.cloud.polaris.discovery.service or spring.application.name");
 		}
+		serviceName = DiscoveryUtil.rewriteServiceId(serviceName);
 		LOCAL_SERVICE = serviceName;
 	}
 
 	private final Map<String, Map<String, String>> fragmentContexts;
 
+	private final Map<String, Object> loadbalancerMetadata;
+
+
 	public MetadataContext() {
 		this.fragmentContexts = new ConcurrentHashMap<>();
+		this.loadbalancerMetadata = new ConcurrentHashMap<>();
 	}
-
 
 	public Map<String, String> getDisposableMetadata() {
 		return this.getFragmentContext(MetadataContext.FRAGMENT_DISPOSABLE);
@@ -148,8 +147,8 @@ public class MetadataContext {
 		return this.getFragmentContext(MetadataContext.FRAGMENT_RAW_TRANSHEADERS_KV);
 	}
 
-	public Map<String, String> getLoadbalancerMetadata() {
-		return this.getFragmentContext(FRAGMENT_LOAD_BALANCER);
+	public Map<String, Object> getLoadbalancerMetadata() {
+		return this.loadbalancerMetadata;
 	}
 
 	public void setTransitiveMetadata(Map<String, String> transitiveMetadata) {
@@ -172,8 +171,8 @@ public class MetadataContext {
 		this.putContext(FRAGMENT_RAW_TRANSHEADERS, key, value);
 	}
 
-	public void setLoadbalancer(String key, String value) {
-		this.putContext(FRAGMENT_LOAD_BALANCER, key, value);
+	public void setLoadbalancer(String key, Object value) {
+		this.loadbalancerMetadata.put(key, value);
 	}
 
 	public Map<String, String> getFragmentContext(String fragment) {

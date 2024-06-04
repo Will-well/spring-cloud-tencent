@@ -19,7 +19,7 @@ package com.tencent.cloud.polaris.circuitbreaker.config;
 
 import com.tencent.cloud.polaris.context.config.PolarisContextAutoConfiguration;
 import com.tencent.cloud.rpc.enhancement.config.RpcEnhancementAutoConfiguration;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
@@ -34,10 +34,10 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 public class PolarisCircuitBreakerBootstrapConfigurationTest {
 	private final ApplicationContextRunner contextRunner = new ApplicationContextRunner()
-			.withConfiguration(AutoConfigurations.of(PolarisContextAutoConfiguration.class,
+			.withConfiguration(AutoConfigurations.of(
+					PolarisContextAutoConfiguration.class,
 					RpcEnhancementAutoConfiguration.class,
 					LoadBalancerAutoConfiguration.class,
-					RpcEnhancementAutoConfiguration.class,
 					PolarisCircuitBreakerBootstrapConfiguration.class))
 			.withPropertyValues("spring.cloud.polaris.enabled=true")
 			.withPropertyValues("spring.cloud.polaris.circuitbreaker.enabled=true");
@@ -45,8 +45,9 @@ public class PolarisCircuitBreakerBootstrapConfigurationTest {
 	@Test
 	public void testDefaultInitialization() {
 		this.contextRunner.run(context -> {
-			assertThat(context).hasSingleBean(
-					PolarisCircuitBreakerAutoConfiguration.CircuitBreakerConfigModifier.class);
+			assertThat(context).hasSingleBean(PolarisCircuitBreakerAutoConfiguration.class);
+			assertThat(context).hasSingleBean(PolarisCircuitBreakerFeignClientAutoConfiguration.class);
+			assertThat(context).hasSingleBean(ReactivePolarisCircuitBreakerAutoConfiguration.class);
 		});
 	}
 }

@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>org.springframework.cloud</groupId>
 		<artifactId>spring-cloud-dependencies-parent</artifactId>
-		<version>3.1.5</version>
+		<version>3.1.9</version>
 		<relativePath/>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
@@ -70,17 +70,22 @@
 	</developers>
 
 	<properties>
-		<revision>1.9.0-2021.0.5-SNAPSHOT</revision>
+		<!-- Project revision -->
+		<revision>1.14.0-2021.0.9-SNAPSHOT</revision>
+
+		<!-- Polaris SDK version -->
+		<polaris.version>1.15.3</polaris.version>
 
 		<!-- Dependencies -->
-		<polaris.version>1.10.1</polaris.version>
-		<guava.version>31.0.1-jre</guava.version>
-		<logback.version>1.2.11</logback.version>
+		<guava.version>32.0.1-jre</guava.version>
+		<logback.version>1.2.13</logback.version>
+		<springdoc.version>1.7.0</springdoc.version>
+		<io.swagger.version>1.5.24</io.swagger.version>
 		<mocktio.version>4.5.1</mocktio.version>
 		<byte-buddy.version>1.12.10</byte-buddy.version>
+		<jackson.version>2.13.5</jackson.version>
 		<protobuf-java.version>3.21.7</protobuf-java.version>
-		<bcprov-jdk15on.version>1.69</bcprov-jdk15on.version>
-		<system-stubs-junit4.version>2.0.1</system-stubs-junit4.version>
+		<system-stubs-jupiter.version>2.0.2</system-stubs-jupiter.version>
 
 		<!-- Maven Plugin Versions -->
 		<maven-javadoc-plugin.verison>3.3.0</maven-javadoc-plugin.verison>
@@ -92,13 +97,14 @@
 	<dependencyManagement>
 		<dependencies>
 			<dependency>
-				<artifactId>polaris-dependencies</artifactId>
-				<groupId>com.tencent.polaris</groupId>
-				<version>${polaris.version}</version>
+				<groupId>com.fasterxml.jackson</groupId>
+				<artifactId>jackson-bom</artifactId>
+				<version>${jackson.version}</version>
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
 
+			<!-- polaris starter -->
 			<dependency>
 				<groupId>com.tencent.cloud</groupId>
 				<artifactId>spring-cloud-tencent-commons</artifactId>
@@ -119,17 +125,10 @@
 
 			<dependency>
 				<groupId>com.tencent.cloud</groupId>
-				<artifactId>spring-cloud-tencent-polaris-loadbalancer</artifactId>
-				<version>${revision}</version>
-			</dependency>
-
-			<dependency>
-				<groupId>com.tencent.cloud</groupId>
 				<artifactId>spring-cloud-starter-tencent-metadata-transfer</artifactId>
 				<version>${revision}</version>
 			</dependency>
 
-			<!--	polaris starter-->
 			<dependency>
 				<groupId>com.tencent.cloud</groupId>
 				<artifactId>spring-cloud-starter-tencent-polaris-ratelimit</artifactId>
@@ -162,12 +161,23 @@
 
 			<dependency>
 				<groupId>com.tencent.cloud</groupId>
+				<artifactId>spring-cloud-starter-tencent-polaris-contract</artifactId>
+				<version>${revision}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>com.tencent.cloud</groupId>
 				<artifactId>spring-cloud-starter-tencent-all</artifactId>
-				<type>pom</type>
 				<version>${revision}</version>
 			</dependency>
 
 			<!-- spring cloud tencent plugins -->
+			<dependency>
+				<groupId>com.tencent.cloud</groupId>
+				<artifactId>spring-cloud-starter-tencent-discovery-adapter-plugin</artifactId>
+				<version>${revision}</version>
+			</dependency>
+
 			<dependency>
 				<groupId>com.tencent.cloud</groupId>
 				<artifactId>spring-cloud-tencent-featureenv-plugin</artifactId>
@@ -177,12 +187,6 @@
 			<dependency>
 				<groupId>com.tencent.cloud</groupId>
 				<artifactId>spring-cloud-tencent-gateway-plugin</artifactId>
-				<version>${revision}</version>
-			</dependency>
-
-			<dependency>
-				<groupId>com.tencent.cloud</groupId>
-				<artifactId>spring-cloud-tencent-pushgateway-plugin</artifactId>
 				<version>${revision}</version>
 			</dependency>
 
@@ -220,15 +224,21 @@
 			</dependency>
 
 			<dependency>
-				<groupId>com.google.protobuf</groupId>
-				<artifactId>protobuf-java</artifactId>
-				<version>${protobuf-java.version}</version>
+				<groupId>org.springdoc</groupId>
+				<artifactId>springdoc-openapi-ui</artifactId>
+				<version>${springdoc.version}</version>
 			</dependency>
 
 			<dependency>
-				<groupId>org.bouncycastle</groupId>
-				<artifactId>bcprov-jdk15on</artifactId>
-				<version>${bcprov-jdk15on.version}</version>
+				<groupId>org.springdoc</groupId>
+				<artifactId>springdoc-openapi-webflux-ui</artifactId>
+				<version>${springdoc.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>com.google.protobuf</groupId>
+				<artifactId>protobuf-java</artifactId>
+				<version>${protobuf-java.version}</version>
 			</dependency>
 
 			<dependency>
@@ -253,9 +263,18 @@
 
 			<dependency>
 				<groupId>uk.org.webcompere</groupId>
-				<artifactId>system-stubs-junit4</artifactId>
-				<version>${system-stubs-junit4.version}</version>
+				<artifactId>system-stubs-jupiter</artifactId>
+				<version>${system-stubs-jupiter.version}</version>
 				<scope>test</scope>
+			</dependency>
+
+			<!-- polaris SDK-->
+			<dependency>
+				<artifactId>polaris-dependencies</artifactId>
+				<groupId>com.tencent.polaris</groupId>
+				<version>${polaris.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
@@ -338,17 +357,17 @@
 					</plugin>
 				</plugins>
 			</build>
-
-			<distributionManagement>
-				<snapshotRepository>
-					<id>nexus-snapshots</id>
-					<url>https://oss.sonatype.org/content/repositories/snapshots/</url>
-				</snapshotRepository>
-				<repository>
-					<id>nexus-releases</id>
-					<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-				</repository>
-			</distributionManagement>
 		</profile>
 	</profiles>
+
+	<distributionManagement>
+		<snapshotRepository>
+			<id>nexus-snapshots</id>
+			<url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+		</snapshotRepository>
+		<repository>
+			<id>nexus-releases</id>
+			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+		</repository>
+	</distributionManagement>
 </project>

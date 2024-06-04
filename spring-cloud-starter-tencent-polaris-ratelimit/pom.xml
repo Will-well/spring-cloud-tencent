@@ -17,7 +17,12 @@
 		<!-- Spring Cloud Tencent dependencies start -->
 		<dependency>
 			<groupId>com.tencent.cloud</groupId>
-			<artifactId>spring-cloud-tencent-polaris-context</artifactId>
+			<artifactId>spring-cloud-tencent-rpc-enhancement</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>com.tencent.cloud</groupId>
+			<artifactId>spring-cloud-starter-tencent-metadata-transfer</artifactId>
 		</dependency>
 		<!-- Spring Cloud Tencent dependencies end -->
 
@@ -63,6 +68,12 @@
 			<groupId>com.tencent.polaris</groupId>
 			<artifactId>polaris-test-mock-discovery</artifactId>
 			<scope>test</scope>
+			<exclusions>
+				<exclusion>
+					<groupId>junit</groupId>
+					<artifactId>junit</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<!-- Polaris dependencies end -->
 

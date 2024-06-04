@@ -18,8 +18,8 @@
 package com.tencent.cloud.rpc.enhancement.feign;
 
 import feign.Client;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.cloud.client.loadbalancer.LoadBalancerProperties;
@@ -42,8 +42,8 @@ public class EnhancedFeignBeanPostProcessorTest {
 
 	private EnhancedFeignBeanPostProcessor enhancedFeignBeanPostProcessor;
 
-	@Before
-	public void setUp() {
+	@BeforeEach
+	void setUp() {
 		enhancedFeignBeanPostProcessor = new EnhancedFeignBeanPostProcessor(null);
 	}
 
@@ -68,9 +68,7 @@ public class EnhancedFeignBeanPostProcessorTest {
 		// isNeedWrap(bean) == false
 		Object bean1 = new Object();
 		Object bean = enhancedFeignBeanPostProcessor.postProcessBeforeInitialization(bean1, "bean1");
-		assertThat(bean).isNotInstanceOfAny(
-				EnhancedFeignClient.class,
-				EnhancedFeignBlockingLoadBalancerClient.class);
+		assertThat(bean).isNotInstanceOfAny(EnhancedFeignClient.class);
 
 		// bean instanceOf Client.class
 		Client bean2 = mock(Client.class);
@@ -81,6 +79,7 @@ public class EnhancedFeignBeanPostProcessorTest {
 		FeignBlockingLoadBalancerClient bean4 = mock(FeignBlockingLoadBalancerClient.class);
 		doReturn(mock(Client.class)).when(bean4).getDelegate();
 		bean = enhancedFeignBeanPostProcessor.postProcessBeforeInitialization(bean4, "bean4");
-		assertThat(bean).isInstanceOf(EnhancedFeignBlockingLoadBalancerClient.class);
+		assertThat(bean).isInstanceOf(FeignBlockingLoadBalancerClient.class);
+		assertThat(((FeignBlockingLoadBalancerClient) bean).getDelegate()).isInstanceOf(EnhancedFeignClient.class);
 	}
 }

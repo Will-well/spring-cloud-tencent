@@ -27,22 +27,22 @@ import com.tencent.cloud.polaris.config.config.ConfigFileGroup;
 import com.tencent.cloud.polaris.context.config.PolarisContextProperties;
 import com.tencent.polaris.configuration.api.core.ConfigFileService;
 import com.tencent.polaris.configuration.api.core.ConfigKVFile;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import org.springframework.core.env.CompositePropertySource;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 /**
  * Test for {@link PolarisConfigFilePuller}.
  *
- * @author wlx
+ * @author wlx, youta
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class PolarisConfigFilePullerTest {
 
 	private final String testNamespace = "testNamespace";
@@ -75,15 +75,17 @@ public class PolarisConfigFilePullerTest {
 		Map<String, Object> emptyMap = new HashMap<>();
 		ConfigKVFile emptyConfigFile = new MockedConfigKVFile(emptyMap);
 		when(configFileService.getConfigYamlFile(testNamespace, testServiceName, "application.yml")).thenReturn(emptyConfigFile);
+		when(configFileService.getConfigYamlFile(testNamespace, testServiceName, "application.yaml")).thenReturn(emptyConfigFile);
 		when(configFileService.getConfigPropertiesFile(testNamespace, testServiceName, "bootstrap.properties")).thenReturn(emptyConfigFile);
 		when(configFileService.getConfigYamlFile(testNamespace, testServiceName, "bootstrap.yml")).thenReturn(emptyConfigFile);
+		when(configFileService.getConfigYamlFile(testNamespace, testServiceName, "bootstrap.yaml")).thenReturn(emptyConfigFile);
 		CompositePropertySource compositePropertySource = new CompositePropertySource(polarisConfigPropertySourceName);
 
 		puller.initInternalConfigFiles(compositePropertySource, new String[] {}, new String[] {}, testServiceName);
 
-		Assert.assertEquals("v1", compositePropertySource.getProperty("k1"));
-		Assert.assertEquals("v2", compositePropertySource.getProperty("k2"));
-		Assert.assertEquals("v3", compositePropertySource.getProperty("k3"));
+		assertThat(compositePropertySource.getProperty("k1")).isEqualTo("v1");
+		assertThat(compositePropertySource.getProperty("k2")).isEqualTo("v2");
+		assertThat(compositePropertySource.getProperty("k3")).isEqualTo("v3");
 	}
 
 	@Test
@@ -113,20 +115,24 @@ public class PolarisConfigFilePullerTest {
 		Map<String, Object> emptyMap = new HashMap<>();
 		ConfigKVFile emptyConfigFile = new MockedConfigKVFile(emptyMap);
 		when(configFileService.getConfigYamlFile(testNamespace, testServiceName, "application.yml")).thenReturn(emptyConfigFile);
+		when(configFileService.getConfigYamlFile(testNamespace, testServiceName, "application.yaml")).thenReturn(emptyConfigFile);
 		when(configFileService.getConfigYamlFile(testNamespace, testServiceName, "application-dev.yml")).thenReturn(emptyConfigFile);
+		when(configFileService.getConfigYamlFile(testNamespace, testServiceName, "application-dev.yaml")).thenReturn(emptyConfigFile);
 		when(configFileService.getConfigPropertiesFile(testNamespace, testServiceName, "bootstrap.properties")).thenReturn(emptyConfigFile);
 		when(configFileService.getConfigPropertiesFile(testNamespace, testServiceName, "bootstrap-dev.properties")).thenReturn(emptyConfigFile);
 		when(configFileService.getConfigYamlFile(testNamespace, testServiceName, "bootstrap.yml")).thenReturn(emptyConfigFile);
+		when(configFileService.getConfigYamlFile(testNamespace, testServiceName, "bootstrap.yaml")).thenReturn(emptyConfigFile);
 		when(configFileService.getConfigYamlFile(testNamespace, testServiceName, "bootstrap-dev.yml")).thenReturn(emptyConfigFile);
+		when(configFileService.getConfigYamlFile(testNamespace, testServiceName, "bootstrap-dev.yaml")).thenReturn(emptyConfigFile);
 		List<String> active = new ArrayList<>();
 		active.add("dev");
 		String[] activeProfiles = active.toArray(new String[] {});
 		CompositePropertySource compositePropertySource = new CompositePropertySource(polarisConfigPropertySourceName);
 		puller.initInternalConfigFiles(compositePropertySource, activeProfiles, new String[] {}, testServiceName);
 
-		Assert.assertEquals("v11", compositePropertySource.getProperty("k1"));
-		Assert.assertEquals("v2", compositePropertySource.getProperty("k2"));
-		Assert.assertEquals("v3", compositePropertySource.getProperty("k3"));
+		assertThat(compositePropertySource.getProperty("k1")).isEqualTo("v11");
+		assertThat(compositePropertySource.getProperty("k2")).isEqualTo("v2");
+		assertThat(compositePropertySource.getProperty("k3")).isEqualTo("v3");
 	}
 
 	@Test
@@ -162,8 +168,8 @@ public class PolarisConfigFilePullerTest {
 		CompositePropertySource compositePropertySource = new CompositePropertySource(polarisConfigPropertySourceName);
 		puller.initCustomPolarisConfigFiles(compositePropertySource, customFiles);
 
-		Assert.assertEquals("v1", compositePropertySource.getProperty("k1"));
-		Assert.assertEquals("v2", compositePropertySource.getProperty("k2"));
-		Assert.assertEquals("v3", compositePropertySource.getProperty("k3"));
+		assertThat(compositePropertySource.getProperty("k1")).isEqualTo("v1");
+		assertThat(compositePropertySource.getProperty("k2")).isEqualTo("v2");
+		assertThat(compositePropertySource.getProperty("k3")).isEqualTo("v3");
 	}
 }

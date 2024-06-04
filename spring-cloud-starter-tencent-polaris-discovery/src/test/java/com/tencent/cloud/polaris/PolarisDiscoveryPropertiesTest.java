@@ -18,7 +18,8 @@
 
 package com.tencent.cloud.polaris;
 
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 
 import static com.tencent.polaris.test.common.Consts.NAMESPACE_TEST;
 import static com.tencent.polaris.test.common.Consts.PROVIDER_TOKEN;
@@ -84,10 +85,15 @@ public class PolarisDiscoveryPropertiesTest {
 		polarisDiscoveryProperties.setServiceListRefreshInterval(1000L);
 		assertThat(polarisDiscoveryProperties.getServiceListRefreshInterval()).isEqualTo(1000L);
 
+		// InstanceId
+		polarisDiscoveryProperties.setInstanceId("test-ins-id");
+		assertThat(polarisDiscoveryProperties.getInstanceId()).isEqualTo("test-ins-id");
+
 		assertThat(polarisDiscoveryProperties.toString())
 				.isEqualTo("PolarisDiscoveryProperties{"
 						+ "namespace='Test'"
 						+ ", service='java_provider_test'"
+						+ ", instanceId='test-ins-id'"
 						+ ", token='19485a7674294e3c88dba293373c1534'"
 						+ ", weight=10, version='1.0.0'"
 						+ ", protocol='HTTP'"

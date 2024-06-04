@@ -23,29 +23,29 @@ import com.tencent.cloud.plugin.gateway.staining.rule.RuleStainingExecutor;
 import com.tencent.cloud.plugin.gateway.staining.rule.RuleStainingProperties;
 import com.tencent.cloud.plugin.gateway.staining.rule.RuleTrafficStainer;
 import com.tencent.cloud.plugin.gateway.staining.rule.StainingRuleManager;
-import com.tencent.polaris.client.api.SDKContext;
+import com.tencent.cloud.polaris.context.PolarisSDKContextManager;
 import com.tencent.polaris.configuration.api.core.ConfigFileService;
 import com.tencent.polaris.configuration.factory.ConfigFileServiceFactory;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.DEFINED_PORT;
 
 /**
  * Test for {@link SCGPluginsAutoConfiguration}.
  * @author derek.yi 2022-11-03
  */
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = DEFINED_PORT, classes = SCGPluginsAutoConfigurationTest.TestApplication.class,
-		properties = {"server.port=8081", "spring.config.location = classpath:application-test.yml",
+		properties = {"server.port=48081", "spring.config.location = classpath:application-test.yml",
 				"spring.cloud.tencent.plugin.scg.staining.rule-staining.enabled = true"})
 public class SCGPluginsAutoConfigurationTest {
 
@@ -54,19 +54,19 @@ public class SCGPluginsAutoConfigurationTest {
 
 	@Test
 	public void testAutoConfiguration() {
-		Assert.assertEquals(1, applicationContext.getBeansOfType(RuleStainingProperties.class).size());
-		Assert.assertEquals(1, applicationContext.getBeansOfType(StainingRuleManager.class).size());
-		Assert.assertEquals(1, applicationContext.getBeansOfType(TrafficStainingGatewayFilter.class).size());
-		Assert.assertEquals(1, applicationContext.getBeansOfType(RuleStainingExecutor.class).size());
-		Assert.assertEquals(1, applicationContext.getBeansOfType(RuleTrafficStainer.class).size());
+		assertThat(applicationContext.getBeansOfType(RuleStainingProperties.class).size()).isEqualTo(1);
+		assertThat(applicationContext.getBeansOfType(StainingRuleManager.class).size()).isEqualTo(1);
+		assertThat(applicationContext.getBeansOfType(TrafficStainingGatewayFilter.class).size()).isEqualTo(1);
+		assertThat(applicationContext.getBeansOfType(RuleStainingExecutor.class).size()).isEqualTo(1);
+		assertThat(applicationContext.getBeansOfType(RuleTrafficStainer.class).size()).isEqualTo(1);
 	}
 
 	@SpringBootApplication
 	public static class TestApplication {
 
 		@Bean
-		public ConfigFileService configFileService(SDKContext sdkContext) {
-			return ConfigFileServiceFactory.createConfigFileService(sdkContext);
+		public ConfigFileService configFileService(PolarisSDKContextManager polarisSDKContextManager) {
+			return ConfigFileServiceFactory.createConfigFileService(polarisSDKContextManager.getSDKContext());
 		}
 	}
 }

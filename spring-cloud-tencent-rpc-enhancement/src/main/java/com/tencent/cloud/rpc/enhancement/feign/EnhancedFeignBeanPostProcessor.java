@@ -17,6 +17,7 @@
 
 package com.tencent.cloud.rpc.enhancement.feign;
 
+import com.tencent.cloud.rpc.enhancement.plugin.EnhancedPluginRunner;
 import feign.Client;
 
 import org.springframework.beans.BeansException;
@@ -35,11 +36,11 @@ import org.springframework.cloud.openfeign.loadbalancer.RetryableFeignBlockingLo
  */
 public class EnhancedFeignBeanPostProcessor implements BeanPostProcessor, BeanFactoryAware {
 
-	private final EnhancedFeignPluginRunner pluginRunner;
+	private final EnhancedPluginRunner pluginRunner;
 
 	private BeanFactory factory;
 
-	public EnhancedFeignBeanPostProcessor(EnhancedFeignPluginRunner pluginRunner) {
+	public EnhancedFeignBeanPostProcessor(EnhancedPluginRunner pluginRunner) {
 		this.pluginRunner = pluginRunner;
 	}
 
@@ -60,9 +61,10 @@ public class EnhancedFeignBeanPostProcessor implements BeanPostProcessor, BeanFa
 					delegate = ((FeignBlockingLoadBalancerClient) bean).getDelegate();
 				}
 				if (delegate != null) {
-					return new EnhancedFeignBlockingLoadBalancerClient(createPolarisFeignClient(delegate),
+					return new FeignBlockingLoadBalancerClient(createPolarisFeignClient(delegate),
 							factory.getBean(BlockingLoadBalancerClient.class),
-							factory.getBean(LoadBalancerClientFactory.class));
+							factory.getBean(LoadBalancerClientFactory.class)
+					);
 				}
 			}
 			return createPolarisFeignClient((Client) bean);
@@ -71,8 +73,7 @@ public class EnhancedFeignBeanPostProcessor implements BeanPostProcessor, BeanFa
 	}
 
 	private boolean isNeedWrap(Object bean) {
-		return bean instanceof Client && !(bean instanceof EnhancedFeignClient)
-				&& !(bean instanceof EnhancedFeignBlockingLoadBalancerClient);
+		return bean instanceof Client && !(bean instanceof EnhancedFeignClient);
 	}
 
 	private EnhancedFeignClient createPolarisFeignClient(Client delegate) {

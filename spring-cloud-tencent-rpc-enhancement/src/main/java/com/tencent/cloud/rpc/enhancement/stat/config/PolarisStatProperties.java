@@ -17,6 +17,7 @@
 
 package com.tencent.cloud.rpc.enhancement.stat.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
@@ -30,7 +31,7 @@ public class PolarisStatProperties {
 	/**
 	 * If state reporter enabled.
 	 */
-	private boolean enabled = false;
+	private boolean enabled = true;
 
 	/**
 	 * Local host for prometheus to pull.
@@ -38,14 +39,33 @@ public class PolarisStatProperties {
 	private String host;
 
 	/**
-	 * Port for prometheus to pull.
+	 * Port for prometheus to pull. 0 for random from 20000 to 65535.
 	 */
-	private int port = 28080;
+	private int port = 0;
 
 	/**
 	 * Path for prometheus to pull.
 	 */
 	private String path = "/metrics";
+
+	/**
+	 * If state pushGateway reporter enabled.
+	 */
+	@Value("${spring.cloud.polaris.stat.pushgateway.enabled:#{false}}")
+	private boolean pushGatewayEnabled = false;
+
+	/**
+	 * PushGateway address.
+	 */
+	@Value("${spring.cloud.polaris.stat.pushgateway.address:}")
+	private String pushGatewayAddress;
+
+	/**
+	 * Push metrics interval.
+	 * unit: milliseconds default 30s.
+	 */
+	@Value("${spring.cloud.polaris.stat.pushgateway.push-interval:#{30000}}")
+	private Long pushGatewayPushInterval = 30 * 1000L;
 
 	public boolean isEnabled() {
 		return enabled;
@@ -77,5 +97,29 @@ public class PolarisStatProperties {
 
 	public void setPath(String path) {
 		this.path = path;
+	}
+
+	public boolean isPushGatewayEnabled() {
+		return pushGatewayEnabled;
+	}
+
+	public void setPushGatewayEnabled(boolean pushGatewayEnabled) {
+		this.pushGatewayEnabled = pushGatewayEnabled;
+	}
+
+	public String getPushGatewayAddress() {
+		return pushGatewayAddress;
+	}
+
+	public void setPushGatewayAddress(String pushGatewayAddress) {
+		this.pushGatewayAddress = pushGatewayAddress;
+	}
+
+	public Long getPushGatewayPushInterval() {
+		return pushGatewayPushInterval;
+	}
+
+	public void setPushGatewayPushInterval(Long pushGatewayPushInterval) {
+		this.pushGatewayPushInterval = pushGatewayPushInterval;
 	}
 }

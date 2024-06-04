@@ -25,8 +25,8 @@ import com.google.common.collect.Sets;
 import com.tencent.cloud.polaris.config.annotation.PolarisConfigKVFileChangeListener;
 import com.tencent.polaris.configuration.api.core.ConfigPropertyChangeInfo;
 import org.assertj.core.api.Assertions;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,7 +36,7 @@ import org.springframework.cloud.context.environment.EnvironmentChangeEvent;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.stereotype.Component;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.DEFINED_PORT;
 
@@ -45,9 +45,9 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
  *
  * @author lepdou 2022-06-11
  */
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = DEFINED_PORT, classes = ConfigChangeListenerTest.TestApplication.class,
-		properties = {"server.port=8081", "spring.config.location = classpath:application-test.yml"})
+		properties = {"server.port=48081", "spring.config.location = classpath:application-test.yml"})
 public class ConfigChangeListenerTest {
 
 	private static final CountDownLatch hits = new CountDownLatch(2);
@@ -104,7 +104,7 @@ public class ConfigChangeListenerTest {
 			@PolarisConfigKVFileChangeListener(interestedKeys = {"timeout"})
 			public void configChangedListener(ConfigChangeEvent event) {
 				ConfigPropertyChangeInfo changeInfo = event.getChange("timeout");
-				timeout = Integer.parseInt(changeInfo.getNewValue());
+				timeout = Integer.parseInt(changeInfo.getNewValue().toString());
 				changeCnt++;
 				hits.countDown();
 			}
@@ -112,7 +112,7 @@ public class ConfigChangeListenerTest {
 			@PolarisConfigKVFileChangeListener(interestedKeyPrefixes = {"timeout"})
 			public void configChangedListener2(ConfigChangeEvent event) {
 				ConfigPropertyChangeInfo changeInfo = event.getChange("timeout");
-				timeout = Integer.parseInt(changeInfo.getNewValue());
+				timeout = Integer.parseInt(changeInfo.getNewValue().toString());
 				changeCnt++;
 				hits.countDown();
 			}

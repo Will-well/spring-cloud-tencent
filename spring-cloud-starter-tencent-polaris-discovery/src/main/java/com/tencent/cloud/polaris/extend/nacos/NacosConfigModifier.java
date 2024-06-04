@@ -23,7 +23,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 
-import com.tencent.cloud.common.constant.ContextConstant;
+import com.tencent.cloud.common.constant.OrderConstant;
 import com.tencent.cloud.polaris.context.PolarisConfigModifier;
 import com.tencent.polaris.api.config.plugin.DefaultPlugins;
 import com.tencent.polaris.factory.config.ConfigurationImpl;
@@ -31,6 +31,8 @@ import com.tencent.polaris.factory.config.consumer.DiscoveryConfigImpl;
 import com.tencent.polaris.factory.config.global.ServerConnectorConfigImpl;
 import com.tencent.polaris.factory.config.provider.RegisterConfigImpl;
 import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import org.springframework.util.CollectionUtils;
 
@@ -40,7 +42,7 @@ import org.springframework.util.CollectionUtils;
  * @author lingxiao.wlx
  */
 public class NacosConfigModifier implements PolarisConfigModifier {
-	private static final String ID = "nacos";
+
 	/**
 	 * nacos username.
 	 */
@@ -53,7 +55,16 @@ public class NacosConfigModifier implements PolarisConfigModifier {
 	 * nacos contextPath.
 	 */
 	public static final String CONTEXT_PATH = "contextPath";
-
+	/**
+	 * nacos namespace.
+	 */
+	public static final String NAMESPACE = "namespace";
+	/**
+	 * nacos group.
+	 */
+	public static final String GROUP = "group";
+	private static final Logger LOGGER = LoggerFactory.getLogger(NacosConfigModifier.class);
+	private static final String ID = "nacos";
 	private final NacosContextProperties nacosContextProperties;
 
 	public NacosConfigModifier(NacosContextProperties nacosContextProperties) {
@@ -64,6 +75,23 @@ public class NacosConfigModifier implements PolarisConfigModifier {
 	public void modify(ConfigurationImpl configuration) {
 		if (Objects.isNull(nacosContextProperties) || !nacosContextProperties.isEnabled()) {
 			return;
+		}
+		// Check if Nacos Available
+		boolean nacosAvailable = false;
+		try {
+			nacosAvailable = null != Class.forName("com.alibaba.nacos.api.naming.NamingService");
+		}
+		catch (Throwable ignored) {
+
+		}
+		if (!nacosAvailable) {
+			LOGGER.error("Please import \"connector-nacos\" dependency when enabling nacos service registration and discovery.\n"
+					+ "Add dependency configuration below to pom.xml:\n"
+					+ "<dependency>\n"
+					+ "\t<groupId>com.tencent.polaris</groupId>\n"
+					+ "\t<artifactId>connector-nacos</artifactId>\n"
+					+ "</dependency>");
+			throw new RuntimeException("Dependency \"connector-nacos\" not found.");
 		}
 		if (CollectionUtils.isEmpty(configuration.getGlobal().getServerConnectors())) {
 			configuration.getGlobal().setServerConnectors(new ArrayList<>());
@@ -95,6 +123,14 @@ public class NacosConfigModifier implements PolarisConfigModifier {
 			metadata.put(CONTEXT_PATH, nacosContextProperties.getContextPath());
 		}
 
+		if (StringUtils.isNotBlank(nacosContextProperties.getNamespace())) {
+			metadata.put(NAMESPACE, nacosContextProperties.getNamespace());
+		}
+
+		if (StringUtils.isNotBlank(nacosContextProperties.getGroup())) {
+			metadata.put(GROUP, nacosContextProperties.getGroup());
+		}
+
 		configuration.getGlobal().getServerConnectors().add(serverConnectorConfig);
 		DiscoveryConfigImpl discoveryConfig = new DiscoveryConfigImpl();
 		discoveryConfig.setServerConnectorId(ID);
@@ -109,6 +145,6 @@ public class NacosConfigModifier implements PolarisConfigModifier {
 
 	@Override
 	public int getOrder() {
-		return ContextConstant.ModifierOrder.LAST;
+		return OrderConstant.Modifier.NACOS_DISCOVERY_CONFIG_ORDER;
 	}
 }

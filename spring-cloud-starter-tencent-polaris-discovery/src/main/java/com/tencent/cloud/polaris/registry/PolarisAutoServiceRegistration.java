@@ -17,6 +17,10 @@
 
 package com.tencent.cloud.polaris.registry;
 
+import com.tencent.cloud.common.metadata.MetadataContext;
+import com.tencent.cloud.polaris.PolarisDiscoveryProperties;
+import com.tencent.polaris.api.pojo.ServiceKey;
+import com.tencent.polaris.assembly.api.AssemblyAPI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,10 +40,21 @@ public class PolarisAutoServiceRegistration extends AbstractAutoServiceRegistrat
 
 	private final PolarisRegistration registration;
 
-	public PolarisAutoServiceRegistration(ServiceRegistry<PolarisRegistration> serviceRegistry,
-			AutoServiceRegistrationProperties autoServiceRegistrationProperties, PolarisRegistration registration) {
+	private final PolarisDiscoveryProperties polarisDiscoveryProperties;
+
+	private final AssemblyAPI assemblyAPI;
+
+	public PolarisAutoServiceRegistration(
+			ServiceRegistry<PolarisRegistration> serviceRegistry,
+			AutoServiceRegistrationProperties autoServiceRegistrationProperties,
+			PolarisRegistration registration,
+			PolarisDiscoveryProperties polarisDiscoveryProperties,
+			AssemblyAPI assemblyAPI
+	) {
 		super(serviceRegistry, autoServiceRegistrationProperties);
 		this.registration = registration;
+		this.polarisDiscoveryProperties = polarisDiscoveryProperties;
+		this.assemblyAPI = assemblyAPI;
 	}
 
 	@Override
@@ -58,6 +73,9 @@ public class PolarisAutoServiceRegistration extends AbstractAutoServiceRegistrat
 			LOGGER.debug("Registration disabled.");
 			return;
 		}
+		if (assemblyAPI != null) {
+			assemblyAPI.initService(new ServiceKey(MetadataContext.LOCAL_NAMESPACE, MetadataContext.LOCAL_SERVICE));
+		}
 		super.register();
 	}
 
@@ -70,8 +88,24 @@ public class PolarisAutoServiceRegistration extends AbstractAutoServiceRegistrat
 	}
 
 	@Override
+	protected void deregister() {
+		if (!this.registration.isRegisterEnabled()) {
+			return;
+		}
+		super.deregister();
+	}
+
+	@Override
+	protected void deregisterManagement() {
+		if (!this.registration.isRegisterEnabled()) {
+			return;
+		}
+		super.deregisterManagement();
+	}
+
+	@Override
 	protected Object getConfiguration() {
-		return this.registration.getPolarisProperties();
+		return this.polarisDiscoveryProperties;
 	}
 
 	@Override
@@ -82,7 +116,7 @@ public class PolarisAutoServiceRegistration extends AbstractAutoServiceRegistrat
 	@Override
 	@SuppressWarnings("deprecation")
 	protected String getAppName() {
-		String appName = registration.getPolarisProperties().getService();
+		String appName = registration.getServiceId();
 		return StringUtils.isEmpty(appName) ? super.getAppName() : appName;
 	}
 }

@@ -28,7 +28,7 @@ import com.google.protobuf.util.JsonFormat;
 import com.tencent.cloud.common.metadata.MetadataContext;
 import com.tencent.cloud.common.util.JacksonUtils;
 import com.tencent.cloud.polaris.context.ServiceRuleManager;
-import com.tencent.polaris.client.pb.RoutingProto;
+import com.tencent.polaris.specification.api.v1.traffic.manage.RoutingProto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,6 +36,7 @@ import org.springframework.boot.actuate.endpoint.annotation.Endpoint;
 import org.springframework.boot.actuate.endpoint.annotation.ReadOperation;
 import org.springframework.boot.actuate.endpoint.annotation.Selector;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 /**
  * Router actuator endpoint.
@@ -54,20 +55,21 @@ public class PolarisRouterEndpoint {
 
 	@ReadOperation
 	public Map<String, Object> router(@Selector String dstService) {
-		List<RoutingProto.Route> routerRules = serviceRuleManager.getServiceRouterRule(MetadataContext.LOCAL_NAMESPACE,
-				MetadataContext.LOCAL_SERVICE, dstService);
-
 		Map<String, Object> result = new HashMap<>();
 
-		List<Object> rules = new LinkedList<>();
-		result.put("routerRules", rules);
+		if (StringUtils.hasText(dstService)) {
+			List<RoutingProto.Route> routerRules = serviceRuleManager.getServiceRouterRule(MetadataContext.LOCAL_NAMESPACE,
+					MetadataContext.LOCAL_SERVICE, dstService);
+			List<Object> rules = new LinkedList<>();
+			result.put("routerRules", rules);
 
-		if (CollectionUtils.isEmpty(routerRules)) {
-			return result;
-		}
+			if (CollectionUtils.isEmpty(routerRules)) {
+				return result;
+			}
 
-		for (RoutingProto.Route route : routerRules) {
-			rules.add(parseRouterRule(route));
+			for (RoutingProto.Route route : routerRules) {
+				rules.add(parseRouterRule(route));
+			}
 		}
 
 		return result;

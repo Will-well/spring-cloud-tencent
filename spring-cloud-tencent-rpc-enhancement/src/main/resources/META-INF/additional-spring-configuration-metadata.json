@@ -33,7 +33,7 @@
     {
       "name": "spring.cloud.polaris.stat.enabled",
       "type": "java.lang.Boolean",
-      "defaultValue": false,
+      "defaultValue": true,
       "description": "Enable polaris stat reporter or not."
     },
     {
@@ -44,14 +44,33 @@
     {
       "name": "spring.cloud.polaris.stat.port",
       "type": "java.lang.Integer",
-      "defaultValue": "28080",
-      "description": "Port for prometheus to pull."
+      "defaultValue": "0",
+      "description": "Port for prometheus to pull. 0 for random from 20000 to 65535."
     },
     {
       "name": "spring.cloud.polaris.stat.path",
       "type": "java.lang.String",
       "defaultValue": "/metrics",
       "description": "Path for prometheus to pull."
+    },
+    {
+      "name": "spring.cloud.polaris.stat.pushgateway.address",
+      "type": "java.lang.String",
+      "description": "PushGateway address.",
+      "sourceType": "com.tencent.cloud.plugin.pushgateway.PolarisStatPushGatewayProperties"
+    },
+    {
+      "name": "spring.cloud.polaris.stat.pushgateway.enabled",
+      "type": "java.lang.Boolean",
+      "description": "If state pushGateway reporter enabled.",
+      "sourceType": "com.tencent.cloud.plugin.pushgateway.PolarisStatPushGatewayProperties",
+      "defaultValue": false
+    },
+    {
+      "name": "spring.cloud.polaris.stat.pushgateway.push-interval",
+      "type": "java.lang.Long",
+      "description": "Push metrics interval. unit: milliseconds default 30s.",
+      "sourceType": "com.tencent.cloud.plugin.pushgateway.PolarisStatPushGatewayProperties"
     }
   ]
 }

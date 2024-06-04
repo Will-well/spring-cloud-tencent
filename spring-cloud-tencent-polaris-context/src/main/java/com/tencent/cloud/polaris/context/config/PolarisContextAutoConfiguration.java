@@ -23,12 +23,11 @@ import java.util.List;
 import com.tencent.cloud.polaris.context.ConditionalOnPolarisEnabled;
 import com.tencent.cloud.polaris.context.ModifyAddress;
 import com.tencent.cloud.polaris.context.PolarisConfigModifier;
+import com.tencent.cloud.polaris.context.PolarisSDKContextManager;
 import com.tencent.cloud.polaris.context.ServiceRuleManager;
-import com.tencent.polaris.api.core.ConsumerAPI;
-import com.tencent.polaris.api.core.ProviderAPI;
+import com.tencent.cloud.polaris.context.listener.PolarisContextApplicationEventListener;
 import com.tencent.polaris.api.exception.PolarisException;
 import com.tencent.polaris.client.api.SDKContext;
-import com.tencent.polaris.factory.api.DiscoveryAPIFactory;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -44,26 +43,10 @@ import org.springframework.core.env.Environment;
 @EnableConfigurationProperties({PolarisContextProperties.class})
 public class PolarisContextAutoConfiguration {
 
-	@Bean(name = "polarisContext", initMethod = "init", destroyMethod = "destroy")
+	@Bean(initMethod = "init")
 	@ConditionalOnMissingBean
-	public SDKContext polarisContext(PolarisContextProperties properties, Environment environment,
-			List<PolarisConfigModifier> modifierList)
-			throws PolarisException {
-		return SDKContext.initContextByConfig(properties.configuration(modifierList, () -> {
-			return environment.getProperty("spring.cloud.client.ip-address");
-		}));
-	}
-
-	@Bean
-	@ConditionalOnMissingBean
-	public ProviderAPI polarisProvider(SDKContext polarisContext) throws PolarisException {
-		return DiscoveryAPIFactory.createProviderAPIByContext(polarisContext);
-	}
-
-	@Bean
-	@ConditionalOnMissingBean
-	public ConsumerAPI polarisConsumer(SDKContext polarisContext) throws PolarisException {
-		return DiscoveryAPIFactory.createConsumerAPIByContext(polarisContext);
+	public PolarisSDKContextManager polarisSDKContextManager(PolarisContextProperties properties, Environment environment, List<PolarisConfigModifier> modifierList) throws PolarisException {
+		return new PolarisSDKContextManager(properties, environment, modifierList);
 	}
 
 	@Bean
@@ -73,7 +56,12 @@ public class PolarisContextAutoConfiguration {
 	}
 
 	@Bean
-	public ServiceRuleManager serviceRuleManager(SDKContext sdkContext) {
-		return new ServiceRuleManager(sdkContext);
+	public ServiceRuleManager serviceRuleManager(PolarisSDKContextManager polarisSDKContextManager) {
+		return new ServiceRuleManager(polarisSDKContextManager.getSDKContext(), polarisSDKContextManager.getConsumerAPI());
+	}
+
+	@Bean
+	public PolarisContextApplicationEventListener contextApplicationEventListener(PolarisSDKContextManager polarisSDKContextManager) {
+		return new PolarisContextApplicationEventListener(polarisSDKContextManager);
 	}
 }

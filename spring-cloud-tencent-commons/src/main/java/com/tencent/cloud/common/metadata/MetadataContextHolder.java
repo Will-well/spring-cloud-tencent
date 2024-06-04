@@ -68,8 +68,8 @@ public final class MetadataContextHolder {
 		metadataContext.setTransitiveMetadata(staticMetadataManager.getMergedStaticTransitiveMetadata());
 		metadataContext.setDisposableMetadata(staticMetadataManager.getMergedStaticDisposableMetadata());
 
-		if (StringUtils.hasText(staticMetadataManager.getTransHeaderFromEnv())) {
-			metadataContext.setTransHeaders(staticMetadataManager.getTransHeaderFromEnv(), "");
+		if (StringUtils.hasText(staticMetadataManager.getTransHeader())) {
+			metadataContext.setTransHeaders(staticMetadataManager.getTransHeader(), "");
 		}
 
 		METADATA_CONTEXT.set(metadataContext);
@@ -135,13 +135,13 @@ public final class MetadataContextHolder {
 			mergedTransitiveMetadata.putAll(staticTransitiveMetadata);
 			mergedTransitiveMetadata.putAll(dynamicTransitiveMetadata);
 			metadataContext.setTransitiveMetadata(Collections.unmodifiableMap(mergedTransitiveMetadata));
-
-			Map<String, String> mergedDisposableMetadata = new HashMap<>(dynamicDisposableMetadata);
-			metadataContext.setUpstreamDisposableMetadata(Collections.unmodifiableMap(mergedDisposableMetadata));
-
-			Map<String, String> staticDisposableMetadata = metadataContext.getDisposableMetadata();
-			metadataContext.setDisposableMetadata(Collections.unmodifiableMap(staticDisposableMetadata));
 		}
+		if (!CollectionUtils.isEmpty(dynamicDisposableMetadata)) {
+			Map<String, String> mergedUpstreamDisposableMetadata = new HashMap<>(dynamicDisposableMetadata);
+			metadataContext.setUpstreamDisposableMetadata(Collections.unmodifiableMap(mergedUpstreamDisposableMetadata));
+		}
+		Map<String, String> staticDisposableMetadata = metadataContext.getDisposableMetadata();
+		metadataContext.setDisposableMetadata(Collections.unmodifiableMap(staticDisposableMetadata));
 		MetadataContextHolder.set(metadataContext);
 	}
 

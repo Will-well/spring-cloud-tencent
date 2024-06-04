@@ -25,11 +25,13 @@ import java.util.Objects;
 import com.tencent.cloud.polaris.config.ConfigurationModifier;
 import com.tencent.cloud.polaris.config.adapter.PolarisPropertySourceManager;
 import com.tencent.cloud.polaris.config.config.PolarisConfigProperties;
+import com.tencent.cloud.polaris.config.config.PolarisCryptoConfigProperties;
 import com.tencent.cloud.polaris.context.ModifyAddress;
 import com.tencent.cloud.polaris.context.PolarisConfigModifier;
 import com.tencent.cloud.polaris.context.config.PolarisContextProperties;
 import com.tencent.polaris.api.utils.StringUtils;
 import com.tencent.polaris.client.api.SDKContext;
+import com.tencent.polaris.factory.config.ConfigurationImpl;
 import org.apache.commons.logging.Log;
 
 import org.springframework.boot.BootstrapRegistry;
@@ -118,6 +120,15 @@ public class PolarisConfigDataLocationResolver implements
 			polarisConfigProperties = new PolarisConfigProperties();
 		}
 
+		PolarisCryptoConfigProperties polarisCryptoConfigProperties = loadPolarisConfigProperties(
+				resolverContext,
+				PolarisCryptoConfigProperties.class,
+				POLARIS_PREFIX + ".config.crypto"
+		);
+		if (Objects.isNull(polarisCryptoConfigProperties)) {
+			polarisCryptoConfigProperties = new PolarisCryptoConfigProperties();
+		}
+
 		PolarisContextProperties polarisContextProperties = loadPolarisConfigProperties(
 				resolverContext,
 				PolarisContextProperties.class,
@@ -128,10 +139,13 @@ public class PolarisConfigDataLocationResolver implements
 		}
 
 		// prepare and init earlier Polaris SDKContext to pull config files from remote.
-		prepareAndInitEarlierPolarisSdkContext(resolverContext, polarisConfigProperties, polarisContextProperties);
+		prepareAndInitEarlierPolarisSdkContext(resolverContext, polarisConfigProperties, polarisCryptoConfigProperties, polarisContextProperties);
 
 		bootstrapContext.registerIfAbsent(PolarisConfigProperties.class,
 				BootstrapRegistry.InstanceSupplier.of(polarisConfigProperties));
+
+		bootstrapContext.registerIfAbsent(PolarisCryptoConfigProperties.class,
+				BootstrapRegistry.InstanceSupplier.of(polarisCryptoConfigProperties));
 
 		bootstrapContext.registerIfAbsent(PolarisContextProperties.class,
 				BootstrapRegistry.InstanceSupplier.of(polarisContextProperties));
@@ -152,7 +166,7 @@ public class PolarisConfigDataLocationResolver implements
 		);
 
 		return loadConfigDataResources(resolverContext,
-				location, profiles, polarisConfigProperties, polarisContextProperties);
+				location, profiles, polarisConfigProperties, polarisCryptoConfigProperties, polarisContextProperties);
 	}
 
 	@Override
@@ -189,6 +203,7 @@ public class PolarisConfigDataLocationResolver implements
 			ConfigDataLocation location,
 			Profiles profiles,
 			PolarisConfigProperties polarisConfigProperties,
+			PolarisCryptoConfigProperties polarisCryptoConfigProperties,
 			PolarisContextProperties polarisContextProperties) {
 		List<PolarisConfigDataResource> result = new ArrayList<>();
 		boolean optional = location.isOptional();
@@ -209,6 +224,7 @@ public class PolarisConfigDataLocationResolver implements
 		}
 		PolarisConfigDataResource polarisConfigDataResource = new PolarisConfigDataResource(
 				polarisConfigProperties,
+				polarisCryptoConfigProperties,
 				polarisContextProperties,
 				profiles, optional,
 				fileName, groupName, serviceName
@@ -246,12 +262,16 @@ public class PolarisConfigDataLocationResolver implements
 	}
 
 	private void prepareAndInitEarlierPolarisSdkContext(ConfigDataLocationResolverContext resolverContext,
-			PolarisConfigProperties polarisConfigProperties,
+			PolarisConfigProperties polarisConfigProperties, PolarisCryptoConfigProperties polarisCryptoConfigProperties,
 			PolarisContextProperties polarisContextProperties) {
 		ConfigurableBootstrapContext bootstrapContext = resolverContext.getBootstrapContext();
 		if (!bootstrapContext.isRegistered(SDKContext.class)) {
 			SDKContext sdkContext = sdkContext(resolverContext,
-					polarisConfigProperties, polarisContextProperties);
+					polarisConfigProperties, polarisCryptoConfigProperties, polarisContextProperties);
+			// not init reporter when creating config data temp SDK context.
+			if (sdkContext.getConfig() instanceof ConfigurationImpl) {
+				((ConfigurationImpl) sdkContext.getConfig()).getGlobal().getStatReporter().setEnable(false);
+			}
 			sdkContext.init();
 			bootstrapContext.register(SDKContext.class, BootstrapRegistry.InstanceSupplier.of(sdkContext));
 		}
@@ -259,22 +279,25 @@ public class PolarisConfigDataLocationResolver implements
 	}
 
 	private SDKContext sdkContext(ConfigDataLocationResolverContext resolverContext,
-			PolarisConfigProperties polarisConfigProperties,
+			PolarisConfigProperties polarisConfigProperties, PolarisCryptoConfigProperties polarisCryptoConfigProperties,
 			PolarisContextProperties polarisContextProperties) {
-		List<PolarisConfigModifier> modifierList = modifierList(polarisConfigProperties, polarisContextProperties);
+		List<PolarisConfigModifier> modifierList = modifierList(polarisConfigProperties, polarisCryptoConfigProperties, polarisContextProperties);
 		return SDKContext.initContextByConfig(polarisContextProperties.configuration(modifierList, () -> {
 			return loadPolarisConfigProperties(resolverContext, String.class, "spring.cloud.client.ip-address");
+		}, () -> {
+			return loadPolarisConfigProperties(resolverContext, Integer.class, "spring.cloud.polaris.local-port");
 		}));
 	}
 
 	private List<PolarisConfigModifier> modifierList(PolarisConfigProperties polarisConfigProperties,
+			PolarisCryptoConfigProperties polarisCryptoConfigProperties,
 			PolarisContextProperties polarisContextProperties) {
 		// add ModifyAddress and ConfigurationModifier to load SDKContext
 		List<PolarisConfigModifier> modifierList = new ArrayList<>();
 		ModifyAddress modifyAddress = new ModifyAddress(polarisContextProperties);
 
 		ConfigurationModifier configurationModifier = new ConfigurationModifier(polarisConfigProperties,
-				polarisContextProperties);
+				polarisCryptoConfigProperties, polarisContextProperties);
 		modifierList.add(modifyAddress);
 		modifierList.add(configurationModifier);
 		return modifierList;
